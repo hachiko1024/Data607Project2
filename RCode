@@ -1,0 +1,259 @@
+---
+title: "Project2"
+author: "Josef Waples"
+date: "10/2/2020"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r magnus data}
+twentyfifteen <- read.csv('~/Desktop/2015.csv')
+twentysixteen <- read.csv('~/Desktop/2016.csv')
+twentyseventeen <- read.csv('~/Desktop/2017.csv')
+twentyeighteen <- read.csv('~/Desktop/2018.csv')
+twentynineteen <- read.csv('~/Desktop/2019.csv')
+
+length(twentyfifteen)
+length(twentysixteen)
+length(twentyseventeen)
+length(twentyeighteen)
+length(twentynineteen)
+
+library(dplyr)
+
+# these data frames have different lengths! Unable to rbind right now. Let's just select 3 columns
+
+twentyfifteen2 <- twentyfifteen %>%
+  select(Country, Happiness.Rank, Happiness.Score)
+
+twentysixteen2 <- twentysixteen %>%
+  select(Country, Happiness.Rank, Happiness.Score)
+
+twentyseventeen2 <- twentyseventeen %>%
+  select(Country, Happiness.Rank, Happiness.Score)
+
+twentyeighteen2 <- twentyeighteen %>%
+  select(Country.or.region, Overall.rank, Score)
+
+twentynineteen2 <- twentynineteen %>%
+  select(Country.or.region, Overall.rank, Score)
+
+# now I need to change column names in order to do an rbind
+
+colnames(twentyfifteen2) <- c("Country", "Rank", "Score")
+colnames(twentysixteen2) <- c("Country", "Rank", "Score")
+colnames(twentyseventeen2) <- c("Country", "Rank", "Score")
+colnames(twentyeighteen2) <- c("Country", "Rank", "Score")
+colnames(twentynineteen2) <- c("Country", "Rank", "Score")
+
+# now I need to add a new column to each in order to not lose track of the year
+
+twentyfifteen2$Year <- 2015
+twentysixteen2$Year <- 2016
+twentyseventeen2$Year <- 2017
+twentyeighteen2$Year <- 2018
+twentynineteen2$Year <- 2019
+
+
+fifteen_to_nineteen <- rbind(twentyfifteen2, twentysixteen2, twentyseventeen2, twentyeighteen2, twentynineteen2)
+
+
+usa_happiness_score <- fifteen_to_nineteen %>%
+  filter(Country == "United States")
+
+
+canada_happiness_score <- fifteen_to_nineteen %>%
+  filter(Country == "Canada")
+
+
+mexico_happiness_score <- fifteen_to_nineteen %>%
+  filter(Country == "Mexico")
+
+library(ggplot2)
+
+ggplot(usa_happiness_score, aes(x = Year, y = Rank)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  scale_y_continuous(trans = "reverse") +
+  labs(title="USA Happiness Score") +
+theme(plot.title = element_text(hjust = 0.5)) +
+labs(caption = "Magnus's discussion post")
+
+ggplot(canada_happiness_score, aes(x = Year, y = Rank)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  scale_y_continuous(trans = "reverse") +
+  labs(title="Canada Happiness Score") +
+theme(plot.title = element_text(hjust = 0.5)) +
+labs(caption = "Magnus's discussion post")
+
+ggplot(mexico_happiness_score, aes(x = Year, y = Rank)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  scale_y_continuous(trans = "reverse") +
+  labs(title="Mexico Happiness Score") +
+theme(plot.title = element_text(hjust = 0.5)) +
+labs(caption = "Magnus's discussion post")
+
+# Happiness Scores are getting worse in North America!
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r johns data, echo=FALSE}
+
+# john's data was an image, so I'm recreating it using matrix function
+
+religion <- c("Agnostic", "Atheist", "Buddhist", "Catholic", "Don't know/refused", "Evangelical Prot", "Hindu", "Historically Black Prot", "Jehovah's Witness", "Jewish")
+col1    <- c(27, 12, 27, 418, 15, 575, 1, 228, 20, 19)
+col2 <- c(34, 27, 21, 617, 14, 869, 9, 244, 27, 19)
+col3 <- c(60, 37, 30, 732, 15, 1064, 7, 236, 24, 25)
+col4 <- c(81, 52, 34, 670, 11, 982, 9, 238, 24, 25)
+col5 <- c(76, 35, 33, 638, 10, 881, 11, 197, 21, 30)
+col6 <- c(137, 70, 58, 1116, 35, 1486, 34, 223, 30, 95)
+
+
+df <- data_frame(religion, col1, col2, col3, col4, col5, col6)
+colnames(df) <- c("religion", "<10k", "$10k-20k", "$20k-30k", "$30k-40k", "$40k-50k", "$50k-75k")
+
+# now to tidy this data
+
+df2 <- df %>%
+  mutate(total = rowSums(.[2:7]))
+
+
+df2 <- df2[-c(2:7)]
+
+
+# df_pie_data <- df2 %>%
+#   group_by(religion) %>% 
+#   tally()
+
+
+df2$fraction = df2$total / sum(df2$total)
+df2 = df2[order(df2$fraction), ]
+df2$ymax = cumsum(df2$fraction)
+df2$ymin = c(0, head(df2$ymax, n=-1))
+
+ggplot(df2, aes(fill=religion, ymax=ymax, ymin=ymin, xmax=4, xmin=3)) +
+geom_rect() +
+coord_polar(theta="y") +
+xlim(c(0, 4)) +
+theme(panel.grid=element_blank()) +
+theme(axis.text=element_blank()) +
+theme(axis.ticks=element_blank()) +
+annotate("text", x = 0, y = 0, label = "Frequency") +
+labs(title="Religion Survey") +
+theme(plot.title = element_text(hjust = 0.5)) +
+labs(caption = "John's discussion post")
+
+
+library(tidyr)
+
+df_gathered <- gather(df, key = 'Income Level', value = 'Count', 2:7)
+
+str(df_gathered)
+
+df_gathered$`Income Level` <- as.factor(df_gathered$`Income Level`)
+df_gathered$religion <- as.factor(df_gathered$religion)
+
+
+
+
+ggplot(df_gathered, aes(x = religion, y = Count, color = `Income Level`)) + 
+  geom_point(size = 4) +
+  theme(axis.text.x = element_text(face = "bold", 
+                           size = 8, angle = 45),
+        axis.text.y = element_text(face = "bold", 
+                           size = 8))
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r rachels data, echo=FALSE}
+
+library(readr)
+
+rdata <- read_csv('~/Desktop/FAO.csv')
+
+head(rdata)
+dim(rdata)
+
+library(tidyr)
+
+rdata_gathered <- gather(rdata, key = 'Year', value = 'Count', 11:63)
+
+# Get rid of the Y in the year column
+rdata_gathered$Year <- sub('.', '', rdata_gathered$Year)
+
+
+head(rdata_gathered)
+
+unique(factor(rdata_gathered$Element)) # The factors are 'Food' and "Feed' - one for humans one for animals
+
+
+library(dplyr)
+
+
+unique(factor(rdata_gathered$Unit)) # the 1000 tonnes would be better read as 1000
+
+rdata_gathered$Unit[rdata_gathered$Unit == "1000 tonnes"] <- 1000
+
+# let's rename the column header so "tonnes" is not lost
+
+colnames(rdata_gathered)[colnames(rdata_gathered) == "Unit"] <- "Unit_Tonnes"
+
+rdata_gathered$Unit_Tonnes <- as.numeric(rdata_gathered$Unit_Tonnes)
+
+rdata_reporting <- rdata_gathered %>%
+  group_by(Area, Year, Element) %>%
+  summarize(sum = sum(Unit_Tonnes))
+
+library(ggplot2)
+
+rdata_reporting_usa <- rdata_reporting %>%
+  filter(Area == "United States of America")
+
+rdata_reporting_mexico <- rdata_reporting %>%
+  filter(Area == "Mexico")
+
+rdata_reporting_canada <- rdata_reporting %>%
+  filter(Area == "Canada")
+
+usa_plot <- ggplot(data = rdata_reporting_usa, aes(x = Year, y = sum, fill = Element)) +
+  geom_col(position = "dodge") +
+  labs(title = "United States of America", subtitle = "Food Production Humans vs. Animals") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(plot.subtitle = element_text(hjust = 0.5)) +
+  theme(plot.title = element_text(color="black", size=14, face="bold.italic"),
+axis.title.x = element_text(color="black", size=14, face="bold"),
+axis.title.y = element_text(color="black", size=14, face="bold")
+) + 
+    theme(axis.text.x = element_text(face = "bold", 
+                           size = 7, angle = 45),
+        axis.text.y = element_text(face = "bold", 
+                           size = 7)) +
+  facet_wrap(~ Area)
+  
+
+usa_plot
+
+
+# According to the Food and Agriculture Organization of the United Nations, Food and Feed Production has been stable in the USA for the last 50+ years!
+
+```
